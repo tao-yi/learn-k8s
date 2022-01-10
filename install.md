@@ -98,9 +98,6 @@ $ kubeadm init --image-repository=registry.aliyuncs.com/google_containers \
   --control-plane-endpoint=cluster-endpoint
 
 
-# 如果报错 ipv4.ip_forward 未开启
-$ sysctl -w net.ipv4.ip_forward=1
-
 # 然后你可以看见控制台输出如下信息
 # Your Kubernetes control-plane has initialized successfully!
 
@@ -133,19 +130,6 @@ $ kubeadm join xxx.xx.x.x:6443 --token qo2wuq.0tk8sa6v206tpfir --discovery-token
 
 # Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
 
-# 在子节点上执行，会报错
-$ kubectl get node
-The connection to the server localhost:8080 was refused - did you specify the right host or port?
-
-# 解决方案：将主节点（master节点）中的【/etc/kubernetes/admin.conf】文件拷贝到从节点相同目录下:
-$ scp -r /etc/kubernetes/admin.conf node1:/etc/kubernetes/admin.conf
-$ scp -r /etc/kubernetes/admin.conf node2:/etc/kubernetes/admin.conf
-
-# 配置环境变量
-$ echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> ~/.bash_profile
-# 立即生效
-$ source ~/.bash_profile
-
 # 现在可以产看节点
 $ kubectl get node
 
@@ -169,4 +153,85 @@ $ kubectl get pod -n kube-system
 kube-flannel-ds-6hfls            1/1     Running   0          15s
 kube-flannel-ds-7bq8n            1/1     Running   0          15s
 kube-flannel-ds-v992z            1/1     Running   0          15s
+```
+
+### 部署 k8s dashboard
+
+```sh
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml
+
+# 或者先下载这个文件
+$ wget https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml
+
+$ kubectl apply -f dashboard.yaml
+
+# 设置访问端口
+$ kubectl edit svc kubernetes-dashboard -n kubernetes-dashboard
+# 将 type: ClusterIP 改成 type: NodePort
+
+# 找到dashboard的service的端口，在安全组中开放这个端口
+$ kubectl get svc -A  | grep kubernetes-dashboard
+kubernetes-dashboard   kubernetes-dashboard        NodePort    10.109.120.115   <none>        443:30591/TCP
+
+```
+
+创建一个访问账号，准备一个 yaml 文件
+
+```yml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: admin-user
+    namespace: kubernetes-dashboard
+```
+
+```sh
+#获取访问令牌
+$ kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}"
+```
+
+### 疑难解答
+
+如果 `kubeadm init` 报错 ipv4.ip_forward 未开启
+
+```sh
+$ sysctl -w net.ipv4.ip_forward=1
+```
+
+```sh
+# 如果在在子节点上执行报错
+$ kubectl get node
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+```
+
+解决方案：将主节点（master 节点）中的【/etc/kubernetes/admin.conf】文件拷贝到从节点相同目录下:
+
+```sh
+$ scp -r /etc/kubernetes/admin.conf node1:/etc/kubernetes/admin.conf
+$ scp -r /etc/kubernetes/admin.conf node2:/etc/kubernetes/admin.conf
+
+# 配置环境变量
+$ echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> ~/.bash_profile
+# 立即生效
+$ source ~/.bash_profile
+```
+
+# 如果 kubeadm 的 discovery-token 令牌过期或者找不到了
+
+```sh
+# 重新生成一个
+$ kubeadm token create --print-join-command
 ```
