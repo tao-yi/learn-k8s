@@ -97,6 +97,7 @@ $ kubeadm init --image-repository=registry.aliyuncs.com/google_containers \
   --apiserver-advertise-address=xxx.xx.x.xx \
   --control-plane-endpoint=cluster-endpoint
 
+# --pod-network-cidr=192.168.0.0/16 表示k8s会给pod分配这个网段范围内的ip地址
 
 # 然后你可以看见控制台输出如下信息
 # Your Kubernetes control-plane has initialized successfully!
