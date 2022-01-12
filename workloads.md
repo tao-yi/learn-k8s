@@ -2,6 +2,8 @@
 
 名称空间用来隔离资源
 
+默认情况下，kubernetes 集群中的所有 pod 都是可以相互访问的，但是在实际中，可能不想让两个 pod 之间进行互相的访问，那此时就可以将两个 pod 划分到不同的 namespace 下，kubernetes 通过将集群内部的资源分配到不同的 Namespace 中，可以形成逻辑上的“组”，以方便不同的资源进行隔离使用和管理。
+
 ```sh
 # 创建命名空间
 $ kubectl create ns hello
