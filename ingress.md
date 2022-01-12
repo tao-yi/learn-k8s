@@ -43,17 +43,18 @@ Ingress 作为 Service 的统一网关入口，所有请求的流量都进入 In
 
 ## 安装 ingress-nginx
 
-https://github.com/kubernetes/ingress-nginx/blob/main/docs/deploy/index.md#bare-metal-clusters
+腾讯云安装 ingress-nginx
 
 ```sh
-$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.0/deploy/static/provider/baremetal/deploy.yaml
-```
+$ kubectl create ns nginx-ingress
 
-```sh
-# 安装完成后，查看暴露的接口
-$ kubectl get svc -A
-NAMESPACE     NAME                                   TYPE         CLUSTER-IP     EXTERNAL-IP     PORT(S)            AGE
-ingress-nginx ingress-nginx-nginx-ingress-controller LoadBalancer 192.168.253.71 42.192.177.193  80:32573/TCP,443:31403/TCP   82s
+$ kubectl apply -f https://raw.githubusercontent.com/TencentCloudContainerTeam/manifest/master/nginx-ingress/nginx-ingress-deployment.yaml -n nginx-ingress
+
+
+# 查看ingress controller创建的svc
+$ kubectl get svc -n nginx-ingress
+NAME                               TYPE           CLUSTER-IP        EXTERNAL-IP   PORT(S)                      AGE
+nginx-ingress-controller           LoadBalancer   192.168.253.100   81.69.152.4   80:30440/TCP,443:32376/TCP   55m
 ```
 
 配置 ingress-nginx
@@ -88,4 +89,13 @@ spec:
                 name: nginx-demo
                 port:
                   number: 8000
+```
+
+## 查看 ingress
+
+```sh
+$ kubectl get ingress
+
+# 可以看到 ingress 的映射规则
+$ kubectl describe ingress ingress-host-bar
 ```
