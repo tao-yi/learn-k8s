@@ -68,3 +68,5 @@ my-dep       NodePort    10.106.251.71   <none>        8000:30831/TCP   49s     
 NodePort 在范围 30000-32767 之间随机选择一个端口。
 
 NodePort 会在每一台服务器都开放 30831 端口，所以访问任意一台机器的 IP:PORT 都可以访问到集群中的机器。
+
+> service 的网络范围在 `kubeadm init` 时通过参数指定了 `--service-cidr=10.96.0.0/12`
