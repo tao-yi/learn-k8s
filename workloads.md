@@ -101,6 +101,9 @@ $ kubectl delete deploy mynginx
 
 # 创建3个Pod
 $ kubectl create deploy my-dep --image=nginx --replicas=3
+
+# 查看yaml格式
+$ kubectl get deploy nginx-mongodb-deploy -o yaml
 ```
 
 使用配置文件创建 Deployment
@@ -114,6 +117,7 @@ metadata:
   name: my-dep
 spec:
   replicas: 3
+  # 用来查找关联的 Pod，所有标签都匹配才行
   selector:
     matchLabels:
       app: my-dep
@@ -122,6 +126,7 @@ spec:
       labels:
         app: my-dep
     spec:
+      # 定义容器，可以多个
       containers:
         - image: nginx
           name: nginx

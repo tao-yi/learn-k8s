@@ -19,6 +19,8 @@ my-dep       ClusterIP   10.111.86.135   <none>        8000/TCP   56s     app=my
 $ curl 10.111.86.135:8000
 ```
 
+Service 的默认类型是 ClusterIP，只能在 Pod 内部访问
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -29,10 +31,11 @@ metadata:
 spec:
   selector: # 选择标签为 app=my-dep 的一组pod
     app: my-dep
+    type: ClusterIP # Service的默认类型，只能在集群内部访问
   ports:
     - port: 8000 # service的端口
       protocol: TCP
-      targetPort: 80 # Pod的端口
+      targetPort: 80 # 容器的端口
 ```
 
 Service 有一个 selector 可以指定某个标签的 Pod
@@ -70,3 +73,21 @@ NodePort 在范围 30000-32767 之间随机选择一个端口。
 NodePort 会在每一台服务器都开放 30831 端口，所以访问任意一台机器的 IP:PORT 都可以访问到集群中的机器。
 
 > service 的网络范围在 `kubeadm init` 时通过参数指定了 `--service-cidr=10.96.0.0/12`
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: my-dep
+  name: my-dep
+spec:
+  selector: # 选择标签为 app=my-dep 的一组pod
+    app: my-dep
+    type: NodePort # Service的默认类型，只能在集群内部访问
+  ports:
+    - port: 8000 # service的端口
+      protocol: TCP
+      targetPort: 80 # 容器的端口
+      nodePort: 31000 # 节点端口，范围固定 30000 ~ 32767
+```
