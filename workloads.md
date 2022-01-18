@@ -175,3 +175,43 @@ kubectl rollout undo deployment/my-dep --to-revision=2
 - `Job/CronJob` 定时任务部署，比如垃圾清理组件，可以在指定时间运行
 
 在 k8s 中，我们不直接控制 Pod，而是通过 Workload 来控制 Pod。
+
+#### DaemonSet
+
+保证集群中的每一台节点都运行一个副本，一般适用于日志收集，节点监控等。
+
+DamonSet 控制器的特点：
+
+- 每当向集群中添加一个 node 时，指定的 pod 副本也将添加到该节点上
+- 当节点从集群中移除时，pod 也就被垃圾回收了
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: # rs名称
+  namespace: #命名空间
+  labels:
+    controller: daemonset
+spec:
+  revisionHistoryLimit: 3 # 保留历史版本
+  updateStrategy: # 更新策略
+    type: RollingUpdate # 滚动更新策略
+    rollingUpdate: # 滚动更新
+      maxUnavailable: 1 # 最大不可用状态的Pod的最大值
+  selector:
+    matchLabels:
+      app: nginx-pod
+    matchExpressions:
+      - {key:app, operator:In, values:[nginx-pod]}
+  template:
+    metadata:
+      labels:
+        app: nginx-pod
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.17
+          ports:
+            - containerPort: 80
+```

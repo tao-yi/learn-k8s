@@ -32,15 +32,18 @@ HostPath 可以解决数据持久化的问题，但是一旦 Node 节点故障�
 #### 主节点
 
 ```sh
+# nfs-utils provides a daemon for the kernel NFS server and related tools
 $ yum install nfs-utils -y
 
-# 在数据主节点上执行
-# 将/nfs/data 这个目录暴露给172.31.0.0/16网段中的所有主机
-$ echo "/nfs/data/ 172.31.0.0/16(insecure,rw,sync,no_root_squash)" > /etc/exports
-
-# 创建共享目录
+# choose the directory to share
 $ mkdir -p /nfs/data
 
+# 在数据主节点上执行
+# /etc/exports是nfs默认读取的配置文件
+# 将/root/nfs/data 这个目录暴露给172.31.0.0/16网段中的所有主机
+$ echo "/root/nfs/data/ 172.31.0.0/16(rw,sync,no_root_squash)" > /etc/exports
+
+$ systemctl start nfs
 $ systemctl enable rpcbind --now
 $ systemctl enable nfs-server --now
 # 配置生效
@@ -57,10 +60,10 @@ Export list for 172.31.0.10:
 /nfs/data 172.31.0.0/16
 
 # 给从节点也创建挂载目录
-$ mkdir -p /nfs/data
+$ mkdir -p /root/nfs/data
 
 # 同步主节点的目录，将从节点的 /nfs/data 挂载到主节点的 /nfs/data 上
-$ mount -t nfs 172.31.0.10:/nfs/data /nfs/data
+$ mount -t nfs 172.31.0.10:/root/nfs/data /root/nfs/data
 
 # 在任何一个节点中创建文件
 $ cd /nfs/data
@@ -135,12 +138,13 @@ metadata:
   name: pv01-10m
 spec:
   capacity:
-    storage: 10M
+    storage: 5Gi
   accessModes:
     - ReadWriteMany
   storageClassName: nfs
+  persistentVolumeReclaimPolicy: Retain
   nfs:
-    path: /nfs/data/01
+    path: /root/nfs/data/pv1
     server: 172.31.0.10
 ---
 apiVersion: v1
@@ -149,7 +153,7 @@ metadata:
   name: pv02-1gi
 spec:
   capacity:
-    storage: 1Gi
+    storage: 10Gi
   accessModes:
     - ReadWriteMany
   storageClassName: nfs
@@ -163,7 +167,7 @@ metadata:
   name: pv03-3gi
 spec:
   capacity:
-    storage: 3Gi
+    storage: 15Gi
   accessModes:
     - ReadWriteMany
   storageClassName: nfs
